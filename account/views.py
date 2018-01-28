@@ -8,8 +8,8 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import FormView, RedirectView, TemplateView, View
 from django.contrib.auth.decorators import login_required
-from account.forms import UserRegistrationForm
-from django.contrib.auth.models import User
+from account.forms import UserAdminCreationForm
+from django.contrib.messages.views import SuccessMessageMixin
 # Create your views here.
 
 class HomePageView(TemplateView):
@@ -67,12 +67,20 @@ class LogoutView(RedirectView):
         return super(LogoutView, self).get(request, *args, **kwargs)
 
 
-class SignUpView(FormView):
+class SignUpView(SuccessMessageMixin, FormView):
     template_name = 'account/signup.html'
     success_url = '/account/home'
-    form_class = UserRegistrationForm
+    form_class = UserAdminCreationForm
+    success_message = "Account was created successfully"
 
     def form_valid(self, form):
         form.save()
+        # get the username and password
+        email = self.request.POST['email']
+        password = self.request.POST['password1']
+        # authenticate user then login
+        new_user = authenticate(email=email, password=password)
+        auth_login(self.request, new_user)
+        return super(SignUpView, self).form_valid(form)
 
-        return render(self.request, 'account/signup_done.html', self.get_context_data())
+
