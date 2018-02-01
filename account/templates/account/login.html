@@ -1,28 +1,84 @@
 {% extends "base.html" %}
+{% load staticfiles %}
 
 {% block title %} Log-in {% endblock %}
 
 {% block content %}
+<div class="container">
 
-    <h1> Log-in</h1>
 
-   {% if form.errors %}
-        <p>
-            Your username and password didn't match.
-            Please try again.
-        </p>
-    {% else %}
-        <p>Please, use the following form to log-in. If you don't have an
-account <a href="{% url 'sign_up' %}">Register here</a></p>
-    {% endif %}
+    <div class="omb_login">
+    	<h3 class="omb_authTitle">Login or <a href="{% url 'sign_up' %}">Sign up</a></h3>
+		<div class="row omb_row-sm-offset-3 omb_socialButtons">
+    	    <div class="col-xs-4 col-sm-2">
+		        <a href="#" class="btn btn-lg btn-block omb_btn-facebook">
+			        <i class="fa fa-facebook visible-xs"></i>
+			        <span class="hidden-xs">Facebook</span>
+		        </a>
+	        </div>
+        	<div class="col-xs-4 col-sm-2">
+		        <a href="#" class="btn btn-lg btn-block omb_btn-twitter">
+			        <i class="fa fa-twitter visible-xs"></i>
+			        <span class="hidden-xs">Twitter</span>
+		        </a>
+	        </div>
+        	<div class="col-xs-4 col-sm-2">
+		        <a href="#" class="btn btn-lg btn-block omb_btn-google">
+			        <i class="fa fa-google-plus visible-xs"></i>
+			        <span class="hidden-xs">Google+</span>
+		        </a>
+	        </div>
+		</div>
 
-    <div class="login-form">
-        <form action="{% url 'login' %}" method="post">
-            {{ form.as_p }}
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next }}" />
-            <p><input type="submit" value="Log-in"></p>
-        </form>
+		<div class="row omb_row-sm-offset-3 omb_loginOr">
+			<div class="col-xs-12 col-sm-6">
+				<hr class="omb_hrOr">
+				<span class="omb_spanOr">or</span>
+			</div>
+		</div>
 
-    </div>
+		<div class="row omb_row-sm-offset-3">
+			<div class="col-xs-12 col-sm-6">
+			    <form class="omb_loginForm" action="{% url 'login' %}" autocomplete="off" method="POST">
+                {% csrf_token %}
+					    {% for field in form %}
+                            <label class="control-label">{{ field.label }}</label>
+                            <div class="input-group">
+                                <span class="input-group-addon"></span>
+                                {{ field }}
+                            </div>
+
+                            <div class="form-control-feedback">
+                             <div class="help-block">
+                                    {{ field.help_text }}
+                                <strong>
+                                    {{ field.errors }}
+                                </strong>
+                             </div>
+                            </div>
+                        {% endfor %}
+
+					<button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
+				</form>
+			</div>
+    	</div>
+		<div class="row omb_row-sm-offset-3">
+			<div class="col-xs-12 col-sm-3">
+				<label class="checkbox">
+					<input type="checkbox" value="remember-me">Remember Me
+				</label>
+			</div>
+			<div class="col-xs-12 col-sm-3">
+				<p class="omb_forgotPwd">
+					<a href="#">Forgot password?</a>
+				</p>
+			</div>
+		</div>
+	</div>
+
+
+
+</div>
 {% endblock %}
+
+

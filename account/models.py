@@ -22,14 +22,14 @@ class MyUserManager(BaseUserManager):
         Creates and saves a superuser with the given email and password.
         """
         user = self.create_user(email, password=password,)
-        user.admin = True
+        user.is_admin = True
         user.staff = True
         user.save(using=self._db)
         return user
 
 
 # Custom User model without nickname for auth via email
-class MyUser(AbstractBaseUser):
+class User(AbstractBaseUser):
 
     objects = MyUserManager()
 
@@ -43,8 +43,8 @@ class MyUser(AbstractBaseUser):
                                  max_length=30,
                                  blank=True)
     active = models.BooleanField(verbose_name='active', default=True)
-    admin = models.BooleanField(default=False)  # a superuser
-    date_creation = models.DateTimeField(verbose_name='date created', auto_now_add=True)
+    is_admin = models.BooleanField(default=False)  # a superuser
+    created_at = models.DateTimeField(verbose_name='date created', auto_now_add=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = [] # Email & Password are required by default.
@@ -82,7 +82,7 @@ class MyUser(AbstractBaseUser):
     @property
     def is_staff(self):
         "Is the user a admin member?"
-        return self.admin
+        return self.is_admin
 
     @property
     def is_active(self):

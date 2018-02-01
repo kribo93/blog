@@ -8,8 +8,9 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import FormView, RedirectView, TemplateView, View
 from django.contrib.auth.decorators import login_required
-from account.forms import UserAdminCreationForm
+from account.forms import UserAdminCreationForm, AuthForm
 from django.contrib.messages.views import SuccessMessageMixin
+
 # Create your views here.
 
 class HomePageView(TemplateView):
@@ -25,8 +26,8 @@ class LoginView(FormView):
        Provides the ability to login as a user with a username and password
     """
     template_name = 'account/login.html'
-    success_url = '/account/home'
-    form_class = AuthenticationForm
+    success_url = '/'
+    form_class = AuthForm
     redirect_field_name = REDIRECT_FIELD_NAME
 
     @method_decorator(sensitive_post_parameters('password'))
@@ -69,7 +70,7 @@ class LogoutView(RedirectView):
 
 class SignUpView(SuccessMessageMixin, FormView):
     template_name = 'account/signup.html'
-    success_url = '/account/home'
+    success_url = '/'
     form_class = UserAdminCreationForm
     success_message = "Account was created successfully"
 

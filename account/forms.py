@@ -1,15 +1,18 @@
 from django import forms
-from django.contrib.auth.forms import ReadOnlyPasswordHashField
-from .models import MyUser
+from django.contrib.auth.forms import ReadOnlyPasswordHashField, AuthenticationForm
+from .models import User
+from account.utils import BootstrapMixin
+from django.contrib.auth import authenticate, get_user_model
 
-class UserAdminCreationForm(forms.ModelForm):
+
+class UserAdminCreationForm(BootstrapMixin, forms.ModelForm):
     """A form for creating new users. Includes all the required
     fields, plus a repeated password."""
     password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
     password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
 
     class Meta:
-        model = MyUser
+        model = User
         fields = ('first_name', 'last_name', 'email')
 
     def clean_password2(self):
@@ -37,11 +40,15 @@ class UserAdminChangeForm(forms.ModelForm):
     password = ReadOnlyPasswordHashField()
 
     class Meta:
-        model = MyUser
-        fields = ('email', 'password', 'active', 'admin')
+        model = User
+        fields = ('email', 'password', 'active', 'is_admin')
 
     def clean_password(self):
         # Regardless of what the user provides, return the initial value.
         # This is done here, rather than on the field, because the
         # field does not have access to the initial value
         return self.initial["password"]
+
+class AuthForm(BootstrapMixin, AuthenticationForm):
+
+    pass
