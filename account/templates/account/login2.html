@@ -1,0 +1,89 @@
+{% load static%}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href="{% static "css/style_2.css" %}" rel="stylesheet">
+</head>
+<body style="background-image: url({% static 'img/background.jpg' %})">
+
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #0D84CE;">
+         <div class="collapse navbar-collapse navbar-right">
+                <a class="navbar-brand" href="{% url 'home' %}">Your lovely blog</a>
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'sign_up' %}">Sign-Up</a>
+            </li>
+          </ul>
+         </div>
+    </nav>
+
+<div id="content" class="conteiner">
+    <div class="row no-gutters">
+        <div id="carousel_bar" class="col col-md-6 col-lg-6" >
+                <div id="carousel_login" class="carousel slide" data-ride="carousel" data-interval="4000">
+                  <div class="carousel-inner">
+                      <div class="carousel-item active">
+                          <img class="d-block" width="550px" height="270" src="{% static 'img/blog1.jpg' %}" alt="Responsive image" >
+                      </div>
+                      <div class="carousel-item">
+                          <img class="d-block" width="550px" height="270" src="{% static 'img/blog_2.jpg' %}" alt="Responsive image" >
+                      </div>
+                      <div class="carousel-item">
+                          <img class="d-block" width="550px" height="270" src="{% static 'img/blog_3.jpg' %}" alt="Responsive image" >
+                      </div>
+                  </div>
+                </div>
+        </div>
+
+        <div class="col col-md-6 col-lg-6">
+            <h3 class="text-left">Login </h3>
+		    <div class="row omb_row-sm-offset-3">
+			    <div class="col-xs-12 col-sm-6 col-md-auto col-lg-auto">
+                    <form class="form-horizontal" action="{% url 'login' %}" autocomplete="off" method="POST"> {% csrf_token %}
+
+                        <div class="help-block">
+                             {{ form.non_field_errors }}
+                        </div>
+                        {% for field in form %}
+                            <div class="input-group">
+                            <span class="input-group-addon"></span>
+                                {{ field }}
+                            </div>
+                            <div class="form-control-feedback">
+                             <div class="help-block">
+                                    {{ field.help_text }}
+                                <strong>
+                                    {{ field.errors }}
+                                </strong>
+                             </div>
+                            </div>
+                        {% endfor %}
+                        <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer id="footer" class="footer navbar-fixed-bottom">
+      <div class="container">
+        <span class="text-center">Copyright 2018</span>
+      </div>
+    </footer>
+
+
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

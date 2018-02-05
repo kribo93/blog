@@ -25,7 +25,7 @@ class LoginView(FormView):
     """
        Provides the ability to login as a user with a username and password
     """
-    template_name = 'account/login.html'
+    template_name = 'account/login2.html'
     success_url = '/'
     form_class = AuthForm
     redirect_field_name = REDIRECT_FIELD_NAME
