@@ -6,26 +6,31 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import FormView, RedirectView, TemplateView, View
+from django.views.generic import FormView, RedirectView, TemplateView, ListView, DetailView
+from django.views.generic.edit import CreateView
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from account.forms import UserAdminCreationForm, AuthForm
 from django.contrib.messages.views import SuccessMessageMixin
+from account.models import Post
+from django.db.models import Q
 
 # Create your views here.
 
-class HomePageView(TemplateView):
-    template_name = 'account/home.html'
+#class HomePageView(TemplateView):
+#    template_name = 'account/home.html'
 
-    @method_decorator(login_required(login_url='/account/login/'))
-    def dispatch(self, *args, **kwargs):
-        return super(HomePageView, self).dispatch(*args, **kwargs)
+#    @method_decorator(login_required(login_url='/account/login/'))
+#    def dispatch(self, *args, **kwargs):
+#        return super(HomePageView, self).dispatch(*args, **kwargs)
+
 
 
 class LoginView(FormView):
     """
        Provides the ability to login as a user with a username and password
     """
-    template_name = 'account/login2.html'
+    template_name = 'account/login.html'
     success_url = '/'
     form_class = AuthForm
     redirect_field_name = REDIRECT_FIELD_NAME
@@ -57,6 +62,7 @@ class LoginView(FormView):
         return redirect_to
 
 
+
 class LogoutView(RedirectView):
     """
     Provides users the ability to logout
@@ -66,6 +72,7 @@ class LogoutView(RedirectView):
     def get(self, request, *args, **kwargs):
         auth_logout(request)
         return super(LogoutView, self).get(request, *args, **kwargs)
+
 
 
 class SignUpView(SuccessMessageMixin, FormView):
@@ -83,5 +90,50 @@ class SignUpView(SuccessMessageMixin, FormView):
         new_user = authenticate(email=email, password=password)
         auth_login(self.request, new_user)
         return super(SignUpView, self).form_valid(form)
+
+
+
+class PostListView(ListView):
+    model = Post
+    template_name = 'account/post_list.html'
+    paginate_by = 7
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+
+    def get_queryset(self):
+        queryset = Post.published.all()
+        query = self.request.GET.get('q')
+        if query:
+            queryset = queryset.filter(Q(title__icontains=query) |
+                                          Q(body__icontains=query)
+                                          ).distinct()
+            return queryset
+        else:
+            return Post.published.all()
+
+
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'account/detail.html'
+
+
+
+class CreatePostView(SuccessMessageMixin,LoginRequiredMixin, CreateView):
+    login_url = '/account/login/'
+
+    template_name = 'account/post_create.html'
+    success_url = '/'
+    model = Post
+    success_message = "Post was created successfully"
+    fields = ('image','title', 'body', 'status', )
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.slug = form.instance.title
+        form.instance.image = form.cleaned_data['image']
+        form.save()
+        return super(CreatePostView, self).form_valid(form)
 
 

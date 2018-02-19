@@ -15,15 +15,15 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from account.views import HomePageView
 from django.conf import settings
 from django.conf.urls.static import static
-from account.views import HomePageView
+from account.views import PostListView
 
 urlpatterns = [
-    url(r'^$', HomePageView.as_view(), name='home'),
+    #url(r'^$', HomePageView.as_view(), name='home'),
+    url(r'^$', PostListView.as_view(), name='home'),
     url(r'^admin/', admin.site.urls),
-    url(r'^account/', include('account.urls')),
+    url(r'^account/', include('account.urls', namespace='account')),
 
 ]
 if settings.DEBUG:

@@ -16,9 +16,8 @@
 </head>
 
 <body>
-
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
           <a class="navbar-brand" href="{% url "home" %}">Habrabobr</a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -27,70 +26,53 @@
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
               <li class="nav-item active">
-                <a class="nav-link" href="{% url "home" %}">Posts <span class="sr-only">(current)</span></a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">Users</a>
+                <a class="nav-link" href="{% url "home" %}">Home <span class="sr-only">(current)</span></a>
               </li>
             </ul>
 
               <ul class="navbar-nav ml-auto">
                   <li class="nav-item">
-                      <form class="form-inline" method="get">
-                      <input class="form-control mr-sm-2" name="q" type="search" placeholder="Search" aria-label="Search" value="{{ request.GET.q }}"/>
-                      <button class="btn btn-outline-secondary mr-5 my-sm-0" type="submit">Search</button>
-                      </form>
+                    <a class="btn btn-outline-primary" href="{% url "account:login" %}">Log-In</a>
+                    <a class="btn btn-outline-success" href="{% url "account:sign_up" %}">Sign-Up</a>
                   </li>
-
-                  {% if request.user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="btn btn-outline-info" href="{% url "account:post_create" %}">Create <span class="sr-only">(current)</span></a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                              User
-                            </a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-
-                          <a class="dropdown-item" href="#">My Posts</a>
-                          <a class="dropdown-item" href="#">Profile</a>
-                          <div class="dropdown-divider"></div>
-                          <a class="dropdown-item" href="#">Profile settings</a>
-                          <a class="dropdown-item" href="{% url "account:my_logout" %}">Log-out</a>
-
-                        </div>
-                        </li>
-
-                  {% else %}
-                      <li class="nav-item">
-                        <a class="btn btn-outline-primary" href="{% url "account:login" %}">Log-In</a>
-                        <a class="btn btn-outline-success" href="{% url "account:sign_up" %}">Sign-Up</a>
-                      </li>
-                  {% endif %}
-
               </ul>
           </div>
         </nav>
     </header>
 
 
-    <main role="main" id="content-main" class="container">
+    <main role="main" id="main-auth" class="container">
         <div class="row">
-                <div class="col-lg-9">
-                    {% block content %}
-                    {% endblock %}
+                <div class="col-3">
+                   <h2 class="text-center">Habrabobr</h2>
+                     <hr>
+                     <p class="text-center">Community of IT specialists </p>
                 </div>
-
-                <div class="col-lg-3">
-                    {% block sidebar %}
+                <div class="col-3">
+                    <br>
+                    <div>
+                          <img class="rounded" src="{% static 'img/base_auth/information2.jpg' %}" alt="" height="200" width="270">
+                          <p class="text-center">Tons of interesting information</p>
+                    </div>
+                    <br>
+                    <div>
+                          <img class="rounded" src="{% static 'img/base_auth/people.png' %}" alt="" height="140" width="270">
+                          <p class="text-center">Constructive dialogues</p>
+                    </div>
+                    <div>
+                          <img class="rounded" src="{% static 'img/base_auth/star2.png' %}" alt="" height="250" width="200">
+                          <p class="text-center">Blogs of leading IT specialists</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    {% block content %}
                     {% endblock %}
                 </div>
             </div>
     </main>
 
-    <footer class="footer ">
-        <div class="container">
-             <div class="row">
+    <footer class="footer">
+            <div class="row">
                 <div class="col-lg-2">
                 </div>
             <div class="col-lg-7">
@@ -106,7 +88,7 @@
                 </address>
             </div>
             </div>
-        </div>
+
     </footer>
 
 

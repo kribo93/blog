@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+
+{% block title %}Post_List {% endblock %}
+
+{% block content %}
+    {% for post in object_list %}
+        <div class="post">
+           <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+            <p class="date">
+                Published {{ post.publish|date:"d.m.Y в H:i" }} by {{ post.author }}
+            </p>
+            {% if post.image %}
+                <img src="{{ post.image.url}}" class="img-thumbnail" >
+            {% endif %}
+             {{ post.body|safe|truncatewords:"50"|linebreaks }}
+                <a class="btn btn-outline-info" href="{{ post.get_absolute_url }}">Read more</a>
+           <br/>
+            <br/>
+            <br/>
+        </div>
+    {% empty %}
+        <p>Статей не обнаружено :(</p>
+    {% endfor %}
+
+    {% if is_paginated %}
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                <span class="page-link">
+                    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </span>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    <span class="sr-only">(current)</span>
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <span class="page-link">
+                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </span>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            {% endif %}
+        </ul>
+    {% endif %}
+
+
+
+
+{% endblock %}
+
+ {% if is_paginated %}
+        <ul class="pagination">
+            <li class="page-item">
+                {% if page_obj.has_previous %}
+                  <span class="page-link">
+                       <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                  </span>
+                {% else %}
+                    <li class="page-item disabled">
+                  <span class="page-link">Previous</span>
+                    </li>
+                {% endif %}
+            </li>
+                <li class="page-item active">
+                  <span class="page-link">
+                    {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    <span class="sr-only">(current)</span>
+                  </span>
+                </li>
+
+            <li class="page-item">
+              {% if page_obj.has_next %}
+                  <span class="page-link">
+                     <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                  </span>
+              {% else %}
+                  <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                  </li>
+              {% endif %}
+            </li>
+      </ul>
+    {% endif %}
+
+
+
+
+
+
+
+

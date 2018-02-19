@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import ReadOnlyPasswordHashField, AuthenticationForm
-from .models import User
+from .models import User, Post
 from account.utils import BootstrapMixin
 from django.contrib.auth import authenticate, get_user_model
 
@@ -52,3 +52,4 @@ class UserAdminChangeForm(forms.ModelForm):
 class AuthForm(BootstrapMixin, AuthenticationForm):
 
     pass
+

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %} {{ post.title }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="">
+            <p class="date">
+       Published {{ post.publish|date:"d.m.Y в H:i" }} by {{ post.author }}
+            </p>
+        </div>
+
+        <div class="">
+            <h1>{{post.title }}</h1>
+        </div>
+
+        <div class="">
+            {% if post.image %}
+        <img src="{{ post.image.url}}" class="img-fluid rounded" >
+            {% endif %}
+
+        <br>
+        <br>
+        {{ post.body }}
+        </div>
+        <div class="">
+            <!-- Отображение списка подобных по тэгам постов, не включая открый пост  -->
+            <h2> Similar posts</h2>
+            {% for post in similar_posts %}
+                <p>
+                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </p>
+            {% empty %}
+                There are no similar posts yet.
+            {% endfor %}
+        </div>
+
+        <div class="">
+            <!-- отображение к-ства комментариев и самих комментариев-->
+    {% with comments.count as total_comments  %}
+        <h2>
+            {{ total_comments }} comment {{ total_comments|pluralize }}
+        </h2>
+    {% endwith %}
+    {%  for comment in comments %}
+        <div class="comment">
+            <p class="info">
+                Comment {{ forloop.counter }} by {{ comment.name }}
+                {{ comment.created }}
+            </p>
+            {{ comment.body|linebreaks }}
+        </div>
+    {% empty %}
+        <p>There are no comments yet.</p>
+    {% endfor %}
+
+    <!-- Создание коментария-->
+    <div class="card-body">
+        <div class="text-left">
+        {% if new_comment %}
+            <h3>Your comment has been added.</h3>
+        {% else %}
+            <h4>Add a new comment</h4>
+            <form action="." method="post">
+                {{ comment_form.as_p }}
+                {% csrf_token %}
+                <p> <input type="submit" value="Add comment"></p>
+            </form>
+    {% endif %}
+        </div>
+    </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Ссылка на функцию "поделиться постом" во views.py-->
+    <p>
+        <a href="#">
+            Share this post
+        </a>
+    </p>
+
+
+{% endblock %}

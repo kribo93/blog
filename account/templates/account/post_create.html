@@ -1,31 +1,26 @@
-{%  extends "base_auth.html" %}
+{%  extends "base.html" %}
 
 {% block title %} Create an account {%  endblock %}
 
 {% block content %}
 <div class="container">
-    <form class="form-horizontal" action="{% url 'account:sign_up' %}" autocomplete="off" method="POST">
+    <form class="form-horizontal" action="{% url 'account:post_create' %}" autocomplete="off" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="row">
             <div class="col-md-3"></div>
             <div class="col-md-6">
-                <h2>Registration</h2>
+                <h2>New Post</h2>
                 <hr>
             </div>
         </div>
         {% for field in form %}
-            <div class="row">
-                <div class="col-md-3 field-label-responsive">
-
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <div class="input-group mb-2 mr-sm-2 mb-sm-0">
-                            {{ field }}
-                        </div>
-                    </div>
-                </div>
+            <label class="control-label">{{ field.label }}</label>
+            <div class="input-group">
+            <span class="input-group-addon"></span>
+                {{ field }}
             </div>
+
+
             <div class="col-md-3">
             <div class="form-control-feedback">
                     <div class="help-block">
@@ -40,7 +35,7 @@
          <div class="row">
             <div class="col-md-3"></div>
                 <div class="col-md-6">
-                    <button type="submit" class="btn btn-success"><i class="fa fa-user-plus"></i> Register</button>
+                    <button type="submit" class="btn btn-success"> Create Post</button>
                 </div>
          </div>
 

@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
 from .forms import UserAdminCreationForm, UserAdminChangeForm
-from .models import User
+from .models import User, Post
 
 
 # Register your models here.
@@ -41,3 +41,15 @@ admin.site.register(User, UserAdmin)
 
 # Remove Group Model from admin. We're not using it.
 admin.site.unregister(Group)
+
+class PostAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'slug', 'author', 'publish',
+'status')
+    list_filter = ('status', 'created', 'publish', 'author')
+    search_fields = ('title', 'body')
+    prepopulated_fields = {'slug': ('title',)}
+    raw_id_fields = ('author',)
+    date_hierarchy = 'publish'
+    ordering = ['status', 'publish']
+
+admin.site.register(Post, PostAdmin)
