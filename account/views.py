@@ -12,9 +12,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from account.forms import UserAdminCreationForm, AuthForm
 from django.contrib.messages.views import SuccessMessageMixin
-from account.models import Post
+from account.models import Post, Profile, User
 from django.db.models import Q
-
+from django.contrib import messages
+from django.http import Http404
 # Create your views here.
 
 #class HomePageView(TemplateView):
@@ -99,11 +100,11 @@ class PostListView(ListView):
     paginate_by = 7
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super(PostListView, self).get_context_data(**kwargs)
         return context
 
     def get_queryset(self):
-        queryset = Post.published.all()
+        queryset = Post.objects.all()
         query = self.request.GET.get('q')
         if query:
             queryset = queryset.filter(Q(title__icontains=query) |
@@ -118,7 +119,38 @@ class PostDetailView(DetailView):
     model = Post
     template_name = 'account/detail.html'
 
+class ProfileView(DetailView):
+    model = Profile
+    template_name = 'account/profile_page.html'
 
+    def get_context_data(self, **kwargs):
+        context = super(ProfileView, self).get_context_data(**kwargs)
+        context['profile'] = Profile.objects.filter(user=self.kwargs['pk'])
+        context['author'] = Post.objects.filter(author=self.kwargs['pk'])
+        print(context['profile'])
+        return context
+
+class ProfileList(ListView):
+    model = Profile
+    template_name = 'account/profile_list.html'
+    paginate_by = 50
+
+    def get_context_data(self, **kwargs):
+        context = super(ProfileList, self).get_context_data(**kwargs)
+        return context
+
+    def get_queryset(self):
+        queryset = Profile.objects.all()
+        query = self.request.GET.get('q')
+        if query:
+            queryset = queryset.filter(Q(user__first_name__icontains=query) |
+                                       Q(user__last_name__icontains=query) |
+                                       Q(nickname__icontains=query) |
+                                       Q(user__email__icontains=query)
+                                          ).distinct()
+            return queryset
+        else:
+            return Profile.objects.all()
 
 class CreatePostView(SuccessMessageMixin,LoginRequiredMixin, CreateView):
     login_url = '/account/login/'
@@ -137,3 +169,70 @@ class CreatePostView(SuccessMessageMixin,LoginRequiredMixin, CreateView):
         return super(CreatePostView, self).form_valid(form)
 
 
+
+
+
+
+
+
+
+
+
+
+
+"""Пробы
+
+
+class ProfileView(DetailView):
+    model = Profile
+    template_name = 'account/profile_page.html'
+
+    def get_context_data(self, **kwargs):
+        if not self.request.user.is_authenticated():
+
+            context = super(ProfileView, self).get_context_data(**kwargs)
+            context['profile'] = Profile.objects.filter(user=self.kwargs['pk'])
+            context['author'] = Post.objects.filter(author=self.kwargs['pk'])
+            return context
+        else:
+            context = super(ProfileView, self).get_context_data(**kwargs)
+            context['profile'] = Profile.objects.filter(user=self.request.user)
+            context['author'] = Post.objects.filter(author=self.request.user)
+        return context
+
+class MyProfileView(DetailView):
+    model = Profile
+    template_name = 'account/profile_page.html'
+    def get_context_data(self, **kwargs):
+        if not self.request.user.is_authenticated():
+            messages.add_message(self.request, messages.INFO, 'You are not logged-in!')
+            context = super(MyProfileView, self).get_context_data(**kwargs)
+            context['profile'] = Profile.objects.all()
+            return context
+        else:
+            context = super(MyProfileView, self).get_context_data(**kwargs)
+            context['profile'] = Profile.objects.filter(user=self.request.user)
+            context['author'] = Post.objects.filter(author=self.request.user)
+
+            print(context['profile'])
+
+        return context
+
+
+
+def get_object(self, queryset=None):
+    try:
+        userk = User.objects.filter(id=self.kwargs['pk'])
+        userr = Profile.objects.filter(user__id=self.kwargs['pk'])
+        my_object = Profile.objects.get(user__id=1)
+
+        print(userr)
+        print(userk)
+        return self.model.objects.filter(user=userk)
+
+    except self.model.DoesNotExist:
+        raise Http404("No Model matches the given query.")
+
+
+
+"""

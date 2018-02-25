@@ -121,6 +121,17 @@ class Post(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        return reverse('account:post_detail', args=[
-            self.pk])
+        return reverse('account:post_detail', args=[self.pk])
 
+
+class Profile(models.Model):
+    nickname = models.CharField(max_length=50,unique=True, blank=True, null=True)
+    user = models.OneToOneField(User, related_name='profile_of_user')
+    date_of_birth = models.DateField(blank=True, null=True)
+    photo = models.ImageField(upload_to='users/%Y/%m/%d', blank=True)
+
+    def __str__(self):
+        return 'Profile for user {}'.format(self.user.first_name)
+
+    def get_absolute_url(self):
+        return reverse('account:profile', kwargs={'pk': self.pk})

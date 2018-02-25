@@ -2,26 +2,30 @@
 {% load staticfiles %}
 
 
-{% block title %}Post_List {% endblock %}
+{% block title %}Profile_List {% endblock %}
 
 {% block content %}
-    {% for post in object_list %}
-        <div class="post">
-           <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
-            <p class="date">
-                Published {{ post.publish|date:"d.m.Y в H:i" }} by {{ post.author }}
-            </p>
-            {% if post.image %}
-                <img src="{{ post.image.url}}" class="img-thumbnail" >
-            {% endif %}
-             {{ post.body|safe|truncatewords:"50"|linebreaks }}
-                <a class="btn btn-outline-info" href="{{ post.get_absolute_url }}">Read more</a>
-           <br/>
-            <br/>
-            <br/>
+    <div class="col-lg-12">
+     <form class="form-inline" method="get">
+                      <input class="form-control mr-sm-2" name="q" type="search" placeholder="Search" aria-label="Search" value="{{ request.GET.q }}"/>
+                      <button class="btn btn-outline-secondary mr-5 my-sm-0" type="submit">Search</button>
+                      </form>
+    </div>
+    <br/>
+    {% for profile in object_list %}
+        <div class="row">
+            <div class="col-lg-2">
+                {% if profile.photo %}
+                    <img src="{{ profile.photo.url}}" class="rounded" width="50">
+                {% endif %}
+            </div>
+            <div class="col-lg-10">
+                <p class="text-left"><a href="{{ profile.get_absolute_url }}">{{ profile.user.get_full_name}}</a></p>
+                <p class="text-left">{{ profile.user.email }}</p>
+            </div>
         </div>
     {% empty %}
-        <p>Статей не обнаружено :(</p>
+        <p>Пользователей не обнаружено :(</p>
     {% endfor %}
 
     {% if is_paginated %}

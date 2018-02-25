@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
 from .forms import UserAdminCreationForm, UserAdminChangeForm
-from .models import User, Post
+from .models import User, Post, Profile
 
 
 # Register your models here.
@@ -52,4 +52,10 @@ class PostAdmin(admin.ModelAdmin):
     date_hierarchy = 'publish'
     ordering = ['status', 'publish']
 
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('nickname', 'user', 'photo', 'date_of_birth')
+
+
+
 admin.site.register(Post, PostAdmin)
+admin.site.register(Profile,ProfileAdmin)

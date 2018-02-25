@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from django.contrib import admin
-from account.views import LoginView, LogoutView, SignUpView, PostListView,PostDetailView, CreatePostView
+from account.views import LoginView, LogoutView, SignUpView, PostListView,PostDetailView, CreatePostView,ProfileView, ProfileList
 
 urlpatterns = [
 
@@ -10,5 +10,7 @@ urlpatterns = [
     #url(r'^post_list/$', PostListView.as_view(), name='post_list'),
     url(r'^post_create/$', CreatePostView.as_view(), name='post_create'),
 
-    url(r'^(?P<pk>\d+)/$', PostDetailView.as_view(), name='post_detail'),
+    url(r'^blog/(?P<pk>\d+)/$', PostDetailView.as_view(), name='post_detail'),
+    url(r'^profile/(?P<pk>\d+)/details/$', ProfileView.as_view(), name='profile'),
+    url(r'^profile/$', ProfileList.as_view(), name='profile_list'),
 ]
