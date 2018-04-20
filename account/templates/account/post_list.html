@@ -12,10 +12,12 @@
                 Published {{ post.publish|date:"d.m.Y в H:i" }} by {{ post.author }}
             </p>
             {% if post.image %}
-                <img src="{{ post.image.url}}" class="img-thumbnail" >
+                <img src="{{ post.image.url}}" class="img-fluid mx-auto" alt="Responsive image">
             {% endif %}
              {{ post.body|safe|truncatewords:"50"|linebreaks }}
-                <a class="btn btn-outline-info" href="{{ post.get_absolute_url }}">Read more</a>
+             <div class="row" id="post_info">
+                 <a class="btn btn-outline-info" href="{{ post.get_absolute_url }}">Read more</a>
+             </div>
            <br/>
             <br/>
             <br/>

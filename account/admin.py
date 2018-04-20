@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
 from .forms import UserAdminCreationForm, UserAdminChangeForm
-from .models import User, Post, Profile
+from .models import User, Post, Profile, Comment
 
 
 # Register your models here.
@@ -53,9 +53,13 @@ class PostAdmin(admin.ModelAdmin):
     ordering = ['status', 'publish']
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('nickname', 'user', 'photo', 'date_of_birth')
+    list_display = ('id', 'nickname', 'user', 'photo', 'date_of_birth')
 
-
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('nickname', 'post', 'created', 'active')
+    list_filter = ('active', 'created', 'updated')
+    search_fields = ('nickname', 'body')
 
 admin.site.register(Post, PostAdmin)
 admin.site.register(Profile,ProfileAdmin)
+admin.site.register(Comment, CommentAdmin)

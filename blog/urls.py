@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^$', PostListView.as_view(), name='home'),
     url(r'^admin/', admin.site.urls),
     url(r'^account/', include('account.urls', namespace='account')),
+    url(r'^ckeditor/', include('ckeditor_uploader.urls')),
 
 ]
 if settings.DEBUG:

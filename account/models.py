@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.urlresolvers import reverse
 from django.utils import timezone
+from ckeditor_uploader.fields import RichTextUploadingField
+
+from django.db.models.signals import post_save
 
 # Create your models here.
 
@@ -105,14 +108,14 @@ class Post(models.Model):
     title = models.CharField(max_length=250)
     slug = models.SlugField(max_length=250, unique_for_date='publish')
     author = models.ForeignKey(User, related_name='blog_posts')
-    body = models.TextField()
+    body = RichTextUploadingField()
     publish = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10,choices=STATUS_CHOICES, default='draft')
     objects = models.Manager()
     published = PublishedManager()
-    image = models.ImageField(upload_to='post_images/', blank=True, default='')
+
 
     class Meta:
         ordering = ('-publish',)
@@ -123,15 +126,33 @@ class Post(models.Model):
     def get_absolute_url(self):
         return reverse('account:post_detail', args=[self.pk])
 
-
 class Profile(models.Model):
-    nickname = models.CharField(max_length=50,unique=True, blank=True, null=True)
-    user = models.OneToOneField(User, related_name='profile_of_user')
+    nickname = models.CharField(max_length=50,unique=True)
+    user = models.OneToOneField(User, unique=True)
     date_of_birth = models.DateField(blank=True, null=True)
-    photo = models.ImageField(upload_to='users/%Y/%m/%d', blank=True)
+    photo = models.ImageField(upload_to='users/%Y/%m/%d', blank=True, null=True)
 
     def __str__(self):
         return 'Profile for user {}'.format(self.user.first_name)
 
     def get_absolute_url(self):
         return reverse('account:profile', kwargs={'pk': self.pk})
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post)
+    nickname = models.ForeignKey(Profile, on_delete=models.PROTECT)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ('created',)
+
+    def __str__(self):
+        return self.body
+
+    def get_absolute_url(self):
+        return  reverse('account:post_detail', args=[self.post.pk])
+
+

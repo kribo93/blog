@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %} {{ post.title }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="">
+            <p class="date">
+       Published {{ post.publish|date:"d.m.Y в H:i" }} by {{ post.author }}
+            </p>
+        </div>
+
+        <div class="">
+            <h1>{{post.title }}</h1>
+        </div>
+
+        <div class="">
+            {% if post.image %}
+        <img src="{{ post.image.url}}" class="img-fluid rounded" >
+            {% endif %}
+
+        <br>
+        <br>
+        {{ post.body|safe }}
+        </div>
+
+    <!-- Отображение списка подобных по тэгам постов, не включая открый пост  -->
+        <div style="background-color:#DBDBDB">
+            <h2 > Similar posts</h2>
+            {% for post in similar_posts %}
+                <p>
+                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </p>
+            {% empty %}
+                There are no similar posts yet.
+            {% endfor %}
+        </div>
+
+    <!-- отображение к-ства комментариев и самих комментариев-->
+
+    <h3 class="mb-2">Comments</h3>
+    {% for comment in post.comment_set.all %}
+        <div class="container">
+            <div class="row">
+                <div class="comments col-md-9" id="comments">
+
+                    <!-- comment -->
+                    <div class="comment mb-2 row">
+                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                            {% if comment.nickname.photo %}
+                                <img src="{{ comment.nickname.photo.url}}" class="mx-auto rounded-circle img-fluid "  alt="avatar">
+                             {% endif %}
+                        </div>
+                        <div class="comment-content col-md-11 col-sm-10">
+                            <h6 class="small comment-meta"><p>{{ comment.nickname.user.email }}   {{ comment.created }}</p></h6>
+                            <div class="comment-body">
+                                <p>{{ comment.body }}
+                                    <br>
+                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <h5 style="font-weight: bold">Add the comment</h5>
+    {% include 'account/comment_add.html' with form=comment_form %}
+
+
+    <!-- Ссылка на функцию "поделиться постом" во views.py-->
+    <p>
+        <a href="#">
+            Share this post
+        </a>
+    </p>
+    </div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+<!--
+{% with comments.count as total_comments  %}
+        <h2>
+            {{ total_comments }} comment {{ total_comments|pluralize }}
+        </h2>
+    {% endwith %}
+    {%  for comment in comments %}
+        <div class="comment">
+            <p class="info">
+                Comment {{ forloop.counter }} by {{ comment.name }}
+                {{ comment.created }}
+            </p>
+            {{ comment.body|linebreaks }}
+        </div>
+    {% empty %}
+        <p>There are no comments yet.</p>
+    {% endfor %}
+
+    <div class="card-body">
+        <div class="text-left">
+        {% if new_comment %}
+            <h3>Your comment has been added.</h3>
+        {% else %}
+            <h4>Add a new comment</h4>
+            <form action="." method="post">
+                {{ comment_form.as_p }}
+                {% csrf_token %}
+                <p> <input type="submit" value="Add comment"></p>
+            </form>
+    {% endif %}
+        </div>
+    </div>
+        </div>
+    </div>
+-->

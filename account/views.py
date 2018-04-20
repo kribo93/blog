@@ -1,21 +1,18 @@
-from django.shortcuts import render, redirect
 from django.utils.http import is_safe_url
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import REDIRECT_FIELD_NAME, login as auth_login, logout as auth_logout, authenticate
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import FormView, RedirectView, TemplateView, ListView, DetailView
+from django.views.generic import FormView, RedirectView, TemplateView, ListView, DetailView, UpdateView,DeleteView
 from django.views.generic.edit import CreateView
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from account.forms import UserAdminCreationForm, AuthForm
+from account.forms import UserAdminCreationForm, AuthForm, UserCreationForm
 from django.contrib.messages.views import SuccessMessageMixin
-from account.models import Post, Profile, User
+from account.models import Post, Profile, User, Comment
 from django.db.models import Q
-from django.contrib import messages
-from django.http import Http404
+from django.core.urlresolvers import reverse_lazy
+from .forms import CommentForm
 # Create your views here.
 
 #class HomePageView(TemplateView):
@@ -84,6 +81,7 @@ class SignUpView(SuccessMessageMixin, FormView):
 
     def form_valid(self, form):
         form.save()
+        profile = Profile.objects.create(nickname=self.request.user.nickname, user=self.request.user)
         # get the username and password
         email = self.request.POST['email']
         password = self.request.POST['password1']
@@ -92,6 +90,21 @@ class SignUpView(SuccessMessageMixin, FormView):
         auth_login(self.request, new_user)
         return super(SignUpView, self).form_valid(form)
 
+class RegisterView(SuccessMessageMixin, FormView):
+    template_name = 'account/signup.html'
+    success_url = '/'
+    form_class = UserCreationForm
+    success_message = "Account was created successfully"
+
+    def form_valid(self, form):
+        user = User.objects.create_user(
+            email=form.cleaned_data['email'],
+            password=form.cleaned_data['password1'],
+        )
+        profile = Profile.objects.create(nickname=form.cleaned_data['nickname'], user=user)
+
+        auth_login(self.request, user)
+        return super(RegisterView, self).form_valid(form)
 
 
 class PostListView(ListView):
@@ -117,7 +130,13 @@ class PostListView(ListView):
 
 class PostDetailView(DetailView):
     model = Post
-    template_name = 'account/detail.html'
+    template_name = 'account/post_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(PostDetailView, self).get_context_data(**kwargs)
+        if self.request.user.is_authenticated():
+            context['comment_form'] = CommentForm(initial={'post':self.object, 'nickname':self.request.user.profile.pk})
+        return context
 
 class ProfileView(DetailView):
     model = Profile
@@ -125,9 +144,7 @@ class ProfileView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ProfileView, self).get_context_data(**kwargs)
-        context['profile'] = Profile.objects.filter(user=self.kwargs['pk'])
-        context['author'] = Post.objects.filter(author=self.kwargs['pk'])
-        print(context['profile'])
+        context['posts'] = Post.objects.filter(author=self.kwargs['pk'])
         return context
 
 class ProfileList(ListView):
@@ -152,31 +169,45 @@ class ProfileList(ListView):
         else:
             return Profile.objects.all()
 
-class CreatePostView(SuccessMessageMixin,LoginRequiredMixin, CreateView):
+class PostCreateView(SuccessMessageMixin,LoginRequiredMixin, CreateView):
     login_url = '/account/login/'
 
     template_name = 'account/post_create.html'
     success_url = '/'
     model = Post
     success_message = "Post was created successfully"
-    fields = ('image','title', 'body', 'status', )
+    fields = ('title', 'body', 'status', )
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         form.instance.slug = form.instance.title
-        form.instance.image = form.cleaned_data['image']
         form.save()
-        return super(CreatePostView, self).form_valid(form)
+        return super(PostCreateView, self).form_valid(form)
 
+class PostUpdateView(SuccessMessageMixin,LoginRequiredMixin, UpdateView):
+    model = Post
+    template_name = 'account/post_update.html'
+    login_url = '/login/'
+    success_message = "Post was updated successfully"
+    success_url = reverse_lazy('account:profile')
+    fields = ('title', 'body', 'status',)
 
+    def get_success_url(self):
+        return reverse_lazy('account:profile', kwargs={'pk': self.request.user.id})
 
+class PostDeleteView(SuccessMessageMixin,LoginRequiredMixin, DeleteView):
+    model = Post
+    template_name = 'account/post_delete.html'
+    login_url = '/login/'
+    success_message = "Post was deleted successfully"
 
+    def get_success_url(self):
+        return reverse_lazy('account:profile', kwargs={'pk': self.request.user.id})
 
-
-
-
-
-
+class CommentAdd(CreateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'account/comment_add.html'
 
 
 
@@ -233,6 +264,47 @@ def get_object(self, queryset=None):
     except self.model.DoesNotExist:
         raise Http404("No Model matches the given query.")
 
+class UserCreateView(FormView):
 
+    # url to redirect to after successful form submission
+    success_url = '/'
+    template_name = 'account/signup.html'
+    success_message = "Account was created successfully"
+
+    def get_context_data(self, *args, **kwargs):
+        data = super(UserCreateView, self).get_context_data(**kwargs)
+        data['userform'] = self.get_form(UserAdminCreationForm, 'user')
+        data['userprofileform'] = self.get_form(UserProfileForm, 'userprofile')
+        return data
+
+    def post(self, request, *args, **kwargs):
+        forms = dict((
+            ('userform', self.get_form(UserAdminCreationForm, 'user')),
+            ('userprofileform', self.get_form(UserProfileForm, 'userprofile')),
+        ))
+        if all([f.is_valid() for f in forms.values()]):
+            return self.form_valid(forms)
+        else:
+            return self.form_invalid(forms)
+
+    def get_form(self, form_class=None, prefix):
+        if form_class is None:
+            form_class = self.form_class
+        return form_class(**self.get_form_kwargs(prefix))
+
+    def get_form_kwargs(self, prefix):
+        kwargs = super(UserCreateView, self).get_form_kwargs()
+        kwargs.update({'prefix': prefix})
+        return kwargs
+
+    def form_valid(self, forms):
+        user = forms['userform'].save()
+        userprofile = forms['userprofileform'].save(commit=False)
+        userprofile.user_id = user.id
+        userprofile.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get(self, request, *args, **kwargs):
+        return self.render_to_response(self.get_context_data())
 
 """

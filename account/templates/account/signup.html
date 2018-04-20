@@ -3,7 +3,9 @@
 {% block title %} Create an account {%  endblock %}
 
 {% block content %}
+
 <div class="container">
+
     <form class="form-horizontal" action="{% url 'account:sign_up' %}" autocomplete="off" method="POST">
         {% csrf_token %}
         <div class="row">
@@ -20,6 +22,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
+                        {{ field.label }}
                         <div class="input-group mb-2 mr-sm-2 mb-sm-0">
                             {{ field }}
                         </div>
