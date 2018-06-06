@@ -39,9 +39,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_select2',
     'ckeditor',
     'ckeditor_uploader',
     'account',
+    'actions',
+    'sorl.thumbnail',
+    'hitcount',
+    'taggit',
+
 ]
 
 MIDDLEWARE = [
@@ -203,3 +209,12 @@ CKEDITOR_CONFIGS = {
         ]),
     }
 }
+
+#######################################
+##  Django HIT Counter CONFIGURATION ##
+#######################################
+
+HITCOUNT_KEEP_HIT_ACTIVE = {'days': 1}
+HITCOUNT_HITS_PER_IP_LIMIT = 0  # unlimited
+HITCOUNT_EXCLUDE_USER_GROUP = ()  # not used
+HITCOUNT_KEEP_HIT_IN_DATABASE = { 'days': 2500 }

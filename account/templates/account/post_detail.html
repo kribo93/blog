@@ -1,20 +1,76 @@
 {% extends 'base.html' %}
 {% load staticfiles %}
+{% load thumbnail %}
+
 
 {% block title %} {{ post.title }}{% endblock %}
 
 {% block content %}
     <div class="container">
-        <div class="">
-            <p class="date">
-       Published {{ post.publish|date:"d.m.Y в H:i" }} by {{ post.author }}
+
+            <p class="post_meta">
+                <a class="blue" href="{{ post.author.profile.get_absolute_url }}">
+                        {% if post.author.profile.photo %}
+                            {% thumbnail post.author.profile.photo "24x24" crop="100% center" as im %}
+                                <img src="{{ im.url}}" class="rounded" aria-haspopup="true" aria-expanded="false" >
+                            {% endthumbnail %}
+                        {% else %}
+                            <img src="{% static 'img/base_auth/user_without_icon.jpg' %}" class="rounded" aria-haspopup="true" aria-expanded="false" style="width: 24px; height: 24px">
+                        {% endif %}
+                    {{ post.author }}
+                </a> <span class="post__time">{{ post.publish|date:"d.m.Y в H:i" }}</span>
             </p>
-        </div>
+            <h2 class="post_title">{{ post.title }}</h2>
+            <p class="tags">
+                {% for tag in post.tags.all %}
+                <a class="link tag-fonts" href="{% url "account:tagged" tag.slug %}">
+                {{ tag.name }}
+                </a>
+                {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
 
-        <div class="">
-            <h1>{{post.title }}</h1>
-        </div>
+        <div class="row justify-content-between post_info" >
+            {% if request.user.is_authenticated %}
+            {% with total_likes=post.users_like.count users_like=post.users_like.all %}
+                <a href="#" data-id="{{ post.id }}" data-action="{% if request.user in users_like %}un{% endif %}like" class=" like " id="like_button">
+                    <div class="like-content">
+                      <button class="btn-like like-review" data-id="{{ post.id }}" data-action="{% if request.user in users_like %}un{% endif %}like"  id="like_button">
+                        <i class="fa fa-heart" aria-hidden="true">
+                          {% if request.user not in users_like %}
+                            Like
+                            {% else %}
+                            You liked it!
+                            {% endif %}
+                        </i>
+                      </button>
+                    </div>
+                </a>
+            {% endwith %}
+            {% else %}
+                <p >Please Log-In or Sign-Up</p>
+            {% endif %}
+             <div class="col-md-4 ml-auto border border-muted rounded" id="post_info2">
+                 {% with total_likes=post.users_like.count users_like=post.users_like.all %}
+                         {% if request.user not in users_like %}
+                             <i class="fa fa-heart fa-sm col-md-3 blue">
+                                 <span class="count">
+                                    <span class="total">{{ total_likes }}</span>
+                                 </span>
+                             </i>
+                         {% else %}
+                             <i class="fa fa-heart fa-sm col-md-3 red">
+                                 <span class="count">
+                                    <span class="total">{{ total_likes }}</span>
+                                 </span>
+                             </i>
+                         {% endif %}
+                 {% endwith %}
 
+                 <i class="fa fa-eye fa-sm col-md-4 blue" >{{ hitcount.total_hits }}</i>
+                <i class="fa fa-comments fa-sm col-md-3 blue" > {{ post.comment_set.count }}</i>
+             </div>
+        </div>
         <div class="">
             {% if post.image %}
         <img src="{{ post.image.url}}" class="img-fluid rounded" >
@@ -26,41 +82,53 @@
         </div>
 
     <!-- Отображение списка подобных по тэгам постов, не включая открый пост  -->
-        <div style="background-color:#DBDBDB">
+        <div class="post_info" style="background-color:#F7F7F7">
             <h2 > Similar posts</h2>
-            {% for post in similar_posts %}
-                <p>
-                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-                </p>
-            {% empty %}
+            <div class="dropdown-divider"></div>
+            <ul class="similar_post_list ">
+                {% for post in similar_posts %}
+                    <li class="similar_post_list_item">
+                        <span class="post-info__date">{{ post.publish|date:"d F Y в H:i" }}</span>
+                        <a  class="link post-info__title" href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        <div class="col-5 " >
+                            {% with total_likes=post.users_like.count %}
+                                <i class="fa fa-heart fa-sm col-md-3 blue">{{ total_likes }}</i>
+                            {% endwith %}
+                            <i class="fa fa-eye fa-sm col-md-4 blue" >{{ hitcount.total_hits }}</i>
+                            <i class="fa fa-comments fa-sm col-md-3 blue" > {{ post.comment_set.count }}</i>
+                         </div>
+                         <div class="dropdown-divider"></div>
+                    </li>
+
+                {% empty %}
                 There are no similar posts yet.
-            {% endfor %}
+                {% endfor %} 
+            </ul>
+           
         </div>
 
     <!-- отображение к-ства комментариев и самих комментариев-->
 
     <h3 class="mb-2">Comments</h3>
+    <br>
     {% for comment in post.comment_set.all %}
+    <!-- comment -->
         <div class="container">
             <div class="row">
-                <div class="comments col-md-9" id="comments">
-
-                    <!-- comment -->
-                    <div class="comment mb-2 row">
-                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                            {% if comment.nickname.photo %}
-                                <img src="{{ comment.nickname.photo.url}}" class="mx-auto rounded-circle img-fluid "  alt="avatar">
-                             {% endif %}
-                        </div>
-                        <div class="comment-content col-md-11 col-sm-10">
-                            <h6 class="small comment-meta"><p>{{ comment.nickname.user.email }}   {{ comment.created }}</p></h6>
-                            <div class="comment-body">
-                                <p>{{ comment.body }}
-                                    <br>
-                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                </p>
-                            </div>
-                        </div>
+                <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                    {% if comment.nickname.photo %}
+                         {% thumbnail comment.nickname.photo "60x60" crop="80% center" as im %}
+                               <img src="{{ im.url}}" class="mx-auto rounded-circle img-fluid "  alt="avatar">
+                         {% endthumbnail %}
+                     {% endif %}
+                </div>
+                <div class="comment-content col-md-11 col-sm-10">
+                    <h6 class="small comment-meta"><p>{{ comment.nickname.user.email }}   {{ comment.created }}</p></h6>
+                    <div class="comment-body">
+                        <p>{{ comment.body }}
+                            <br>
+                            <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -81,13 +149,122 @@
 
 {% endblock %}
 
+{% block sidebar %}
+    <div class="sidebar">
+        <div class="ads">
+            <img class="img-fluid" src="{% static "img/ads.jpg"%}" >
+        </div>
+        <div class="sidebar-content">
+
+            <ul class="list-group list-group-flush">
+            <span>Most Viewed posts</span>
+            {% for post in ordering_posts %}
+                <li class="list-group-item"><a class="link" href="{{ post.get_absolute_url}}">{{ post.title }}</a>
+                    <div class="col">
+                        <i class="fa fa-eye fa-xs  blue" >{{ post.hit_count.hits }}</i>
+                        <i class="fa fa-comments fa-xs offset-md-1 blue">  {{ post.comment_set.count }}</i>
+                    </div>
+                </li>
+
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block domready %}
+
+   $(function(){
+	$('.like-review').click(function(e){
+
+
+        e.preventDefault();
+        $.post('{% url "account:like" %}',
+            {
+                id: $(this).data('id'),
+                action: $(this).data('action')
+            },
+            function(data){
+                if (data['status'] == 'ok')
+                {
+                    var previous_action = $('button.like-review').data('action');
+                    // toggle data-action
+                    $('button.like-review').data('action', previous_action == 'like' ? 'unlike' : 'like');
+                    // toggle text
+                     $('button.like-review').find('i').text(previous_action == 'like' ? 'You liked it!' :'Like');
+
+                     $('button.like-review').children('.fa-heart').removeClass('animate-like');
+                     setTimeout("$('button.like-review').children('.fa-heart').addClass('animate-like')",100)
+
+                    // update total likes
+                    var previous_likes = parseInt($('span.count .total').text());
+                    $('span.count .total').text(previous_action == 'like' ? previous_likes + 1 : previous_likes - 1);
+                    $('#post_info2').children("i.fa-heart").toggleClass('blue red');
+                }
+        });
+	});
+});
+
+{% endblock %}
+
+ $('a.like').click(function(e){
+        e.preventDefault();
+        $.post('{% url "account:like" %}',
+            {
+                id: $(this).data('id'),
+                action: $(this).data('action')
+            },
+            function(data){
+                if (data['status'] == 'ok')
+                {
+                    var previous_action = $('a.like').data('action');
+                    icon = $('a.like').find("i");
+                    // toggle data-action
+                    $('a.like').data('action', previous_action == 'like' ? 'unlike' : 'like');
+                    // toggle link icon
+                     $('a.like').find('i').text(previous_action == 'like' ? 'Unlike' :'Like');
+                     $('a.like').find('.fa-heart').toggleClass('animate-like');
+
+
+                    // update total likes
+                    var previous_likes = parseInt($('span.count .total').text());
+                    $('span.count .total').text(previous_action == 'like' ? previous_likes + 1 : previous_likes - 1);
+
+                }
+        });
+
+ });
 
 
 
 
 
+ $('a.like').click(function(e){
+        e.preventDefault();
+        $.post('{% url "account:like" %}',
+            {
+                id: $(this).data('id'),
+                action: $(this).data('action')
+            },
+            function(data){
+                if (data['status'] == 'ok')
+                {
+                    var previous_action = $('a.like').data('action');
+                    icon = $('a.like').find("i");
+                    // toggle data-action
+                    $('a.like').data('action', previous_action == 'like' ? 'unlike' : 'like');
+                    // toggle link icon
 
+                    $('a.like').children("i").toggleClass('blue red');
 
+                    // update total likes
+                    var previous_likes = parseInt($('span.count .total').text());
+                    $('span.count .total').text(previous_action == 'like' ? previous_likes + 1 : previous_likes - 1);
+                }
+        });
+
+    });
 
 <!--
 {% with comments.count as total_comments  %}

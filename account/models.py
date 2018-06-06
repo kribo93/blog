@@ -3,6 +3,14 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 from ckeditor_uploader.fields import RichTextUploadingField
+from sorl.thumbnail import get_thumbnail
+from hitcount.models import HitCount, HitCountMixin
+from django.contrib.contenttypes.fields import GenericRelation
+from taggit.managers import TaggableManager
+from taggit.models import Tag
+
+import re
+from django.conf import settings
 
 from django.db.models.signals import post_save
 
@@ -100,13 +108,14 @@ class PublishedManager(models.Manager):
         return super(PublishedManager,
                      self).get_queryset().filter(status='published')
 
-class Post(models.Model):
+class Post(models.Model, HitCountMixin):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
         ('published', 'Published'),
     )
     title = models.CharField(max_length=250)
-    slug = models.SlugField(max_length=250, unique_for_date='publish')
+    tags = models.ManyToManyField(Tag)
+    slug = models.SlugField(max_length=250, unique_for_date='publish', allow_unicode=True)
     author = models.ForeignKey(User, related_name='blog_posts')
     body = RichTextUploadingField()
     publish = models.DateTimeField(default=timezone.now)
@@ -115,7 +124,12 @@ class Post(models.Model):
     status = models.CharField(max_length=10,choices=STATUS_CHOICES, default='draft')
     objects = models.Manager()
     published = PublishedManager()
-
+    users_like = models.ManyToManyField(User,
+                                   related_name='posts_liked',
+                                   blank=True)
+    hit_count_generic = GenericRelation(
+        HitCount, object_id_field='object_pk',
+        related_query_name='hit_count_generic_relation')
 
     class Meta:
         ordering = ('-publish',)
@@ -125,6 +139,7 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse('account:post_detail', args=[self.pk])
+
 
 class Profile(models.Model):
     nickname = models.CharField(max_length=50,unique=True)
@@ -137,6 +152,9 @@ class Profile(models.Model):
 
     def get_absolute_url(self):
         return reverse('account:profile', kwargs={'pk': self.pk})
+
+    def get_image_60x60(self):
+        return get_thumbnail(self.photo, '60x60', crop='center', quality=50)
 
 class Comment(models.Model):
     post = models.ForeignKey(Post)

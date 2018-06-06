@@ -4,25 +4,30 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import FormView, RedirectView, TemplateView, ListView, DetailView, UpdateView,DeleteView
+from django.views.generic import FormView, RedirectView, ListView, DetailView, UpdateView,DeleteView
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from account.forms import UserAdminCreationForm, AuthForm, UserCreationForm
+from account.forms import UserAdminCreationForm, AuthForm, UserCreationForm, CommentForm, ProfileForm, \
+     AccountUpdateForm, PostForm
 from django.contrib.messages.views import SuccessMessageMixin
 from account.models import Post, Profile, User, Comment
 from django.db.models import Q
 from django.core.urlresolvers import reverse_lazy
-from .forms import CommentForm
+from django.utils.text import slugify
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from common.decorators import ajax_required
+from django.contrib.auth.decorators import login_required
+from hitcount.views import HitCountDetailView
+from taggit.models import Tag
+from django.db.models import Count
 # Create your views here.
 
-#class HomePageView(TemplateView):
-#    template_name = 'account/home.html'
 
-#    @method_decorator(login_required(login_url='/account/login/'))
-#    def dispatch(self, *args, **kwargs):
-#        return super(HomePageView, self).dispatch(*args, **kwargs)
-
-
+####################################
+    ##  Authentication ##
+####################################
 
 class LoginView(FormView):
     """
@@ -59,8 +64,6 @@ class LoginView(FormView):
             redirect_to = self.success_url
         return redirect_to
 
-
-
 class LogoutView(RedirectView):
     """
     Provides users the ability to logout
@@ -70,8 +73,6 @@ class LogoutView(RedirectView):
     def get(self, request, *args, **kwargs):
         auth_logout(request)
         return super(LogoutView, self).get(request, *args, **kwargs)
-
-
 
 class SignUpView(SuccessMessageMixin, FormView):
     template_name = 'account/signup.html'
@@ -107,6 +108,10 @@ class RegisterView(SuccessMessageMixin, FormView):
         return super(RegisterView, self).form_valid(form)
 
 
+####################################
+    ##  POST VIEWS ##
+####################################
+
 class PostListView(ListView):
     model = Post
     template_name = 'account/post_list.html'
@@ -114,6 +119,8 @@ class PostListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(PostListView, self).get_context_data(**kwargs)
+        context['ordering_posts']= Post.objects.order_by("-hit_count_generic__hits")[:6]
+
         return context
 
     def get_queryset(self):
@@ -121,66 +128,60 @@ class PostListView(ListView):
         query = self.request.GET.get('q')
         if query:
             queryset = queryset.filter(Q(title__icontains=query) |
-                                          Q(body__icontains=query)
-                                          ).distinct()
+                                       Q(body__icontains=query)|
+                                       Q(tags__name__icontains=query)
+                                       ).distinct()
             return queryset
         else:
             return Post.published.all()
 
 
-class PostDetailView(DetailView):
+
+class TagIndexView(ListView):
     model = Post
-    template_name = 'account/post_detail.html'
+    template_name = 'account/post_list.html'
+    paginate_by = 7
 
     def get_context_data(self, **kwargs):
-        context = super(PostDetailView, self).get_context_data(**kwargs)
-        if self.request.user.is_authenticated():
-            context['comment_form'] = CommentForm(initial={'post':self.object, 'nickname':self.request.user.profile.pk})
-        return context
-
-class ProfileView(DetailView):
-    model = Profile
-    template_name = 'account/profile_page.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(ProfileView, self).get_context_data(**kwargs)
-        context['posts'] = Post.objects.filter(author=self.kwargs['pk'])
-        return context
-
-class ProfileList(ListView):
-    model = Profile
-    template_name = 'account/profile_list.html'
-    paginate_by = 50
-
-    def get_context_data(self, **kwargs):
-        context = super(ProfileList, self).get_context_data(**kwargs)
+        context = super(TagIndexView, self).get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all()
         return context
 
     def get_queryset(self):
-        queryset = Profile.objects.all()
-        query = self.request.GET.get('q')
-        if query:
-            queryset = queryset.filter(Q(user__first_name__icontains=query) |
-                                       Q(user__last_name__icontains=query) |
-                                       Q(nickname__icontains=query) |
-                                       Q(user__email__icontains=query)
-                                          ).distinct()
-            return queryset
-        else:
-            return Profile.objects.all()
+        return Post.objects.filter(tags__slug=self.kwargs.get('slug'))
+
+class PostDetailView(HitCountDetailView):
+    model = Post
+    template_name = 'account/post_detail.html'
+    count_hit = True
+
+    def get_context_data(self, **kwargs):
+        context = super(PostDetailView, self).get_context_data(**kwargs)
+        context['ordering_posts'] = Post.objects.order_by("-hit_count_generic__hits")[:6]
+        #list of similar posts
+        post = self.object
+        post_tags_ids = post.tags.values_list('id', flat=True)
+        similar_posts = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
+        context['similar_posts'] = similar_posts.annotate(same_tags=Count('tags')) \
+                            .order_by('-same_tags', '-publish')[:4]
+        #commentform
+        if self.request.user.is_authenticated():
+            context['comment_form'] = CommentForm(initial={'post': self.object, 'nickname': self.request.user.profile.pk})
+        return context
 
 class PostCreateView(SuccessMessageMixin,LoginRequiredMixin, CreateView):
     login_url = '/account/login/'
 
     template_name = 'account/post_create.html'
     success_url = '/'
-    model = Post
+    form_class = PostForm
+
     success_message = "Post was created successfully"
-    fields = ('title', 'body', 'status', )
+
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        form.instance.slug = form.instance.title
+        form.instance.slug = slugify(form.instance.title, allow_unicode=True)
         form.save()
         return super(PostCreateView, self).form_valid(form)
 
@@ -208,6 +209,81 @@ class CommentAdd(CreateView):
     model = Comment
     form_class = CommentForm
     template_name = 'account/comment_add.html'
+
+
+####################################
+    ##  PROFILE VIEWS##
+####################################
+
+class ProfileView(DetailView):
+    model = Profile
+    template_name = 'account/profile_page.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ProfileView, self).get_context_data(**kwargs)
+        context['posts'] = Post.objects.filter(author=self.kwargs['pk'])
+        return context
+
+class ProfileListView(ListView):
+    model = Profile
+    template_name = 'account/profile_list.html'
+    paginate_by = 50
+
+    def get_context_data(self, **kwargs):
+        context = super(ProfileListView, self).get_context_data(**kwargs)
+        return context
+
+    def get_queryset(self):
+        queryset = Profile.objects.all()
+        query = self.request.GET.get('q')
+
+        if query:
+            queryset = queryset.filter(Q(user__first_name__icontains=query) |
+                                       Q(user__last_name__icontains=query) |
+                                       Q(nickname__icontains=query) |
+                                       Q(user__email__icontains=query)
+                                          ).distinct()
+            return queryset
+        else:
+            return Profile.objects.all()
+
+class ProfileUpdateView(SuccessMessageMixin,LoginRequiredMixin, UpdateView):
+    model = Profile
+    form_class = ProfileForm
+    template_name = 'account/Profile_settings/profile_settings.html'
+    login_url = '/login/'
+    success_message = "Profile was updated successfully"
+
+    def get_success_url(self):
+        return reverse_lazy('account:profile', kwargs={'pk': self.request.user.profile.id})
+
+class AccountUpdateView(SuccessMessageMixin,LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = AccountUpdateForm
+    login_url = '/login/'
+    success_message = "Account was updated successfully"
+    template_name = 'account/Profile_settings/account_settings.html'
+
+    def get_success_url(self):
+        return reverse_lazy('account:profile', kwargs={'pk': self.request.user.profile.id})
+
+@ajax_required
+@login_required
+@require_POST
+def post_like(request):
+    post_id = request.POST.get('id')
+    action = request.POST.get('action')
+    if post_id and action:
+        try:
+            post = Post.objects.get(id=post_id)
+            if action == 'like':
+                post.users_like.add(request.user)
+            else:
+                post.users_like.remove(request.user)
+            return JsonResponse({'status': 'ok'})
+        except:
+            pass
+    return JsonResponse({'status': 'ok'})
 
 
 

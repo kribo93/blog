@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load thumbnail%}
+{% block title %}Settings {% endblock %}
+
+{% block content %}
+<div class="container">
+{% if request.user.is_authenticated %}
+<div class="col-md-6">
+                <h3>Settings</h3>
+                <hr>
+            </div>
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'account:profile_update' user.profile.pk %}">Profile</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link " href="{% url 'account:account_update' user.pk %}">Account</a>
+      </li>
+    </ul>
+    <br/>
+
+    <form class="profile-form" method="post" action="{% url 'account:profile_update'  object.pk %}" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="form-group col-md-8">
+                {{ form.nickname.label }}
+                 <input type="text" class="form-control" name="nickname" id="inputNickname"  placeholder="Nickname" value="{{ form.nickname.value|stringformat:'s' }}">
+            </div>
+            <div class="form-group col-md-4">
+                {{ form.photo.label }}
+
+                <div class="container">
+                <br/>
+                    {% if user.profile.photo %}
+                    {% thumbnail user.profile.photo "70x70" crop="100% center" as im %}
+                        <img src="{{ im.url}}" class="rounded-circle " aria-haspopup="true" aria-expanded="false" >
+                    {% endthumbnail %}
+                {% else %}
+                    <img src="{% static 'img/base_auth/user_without_icon.jpg' %}" class="rounded-circle"  aria-haspopup="true" aria-expanded="false" style="width: 70px; height: 70px">
+                {% endif %}
+                </div>
+                <br/>
+                <input type="file" name="photo" id="id_photo" placeholder="Photo">
+            </div>
+        </div>
+        <div class="col">
+                {{ form.date_of_birth.label}}
+         </div>
+        <div class="form-row date_of_birth" >
+                {{ form.date_of_birth }}
+        </div>
+
+        <br/>
+        <div class="col-md-6">
+            <button type="submit" class="btn btn-success"> Update profile</button>
+        </div>
+
+    </form>
+{% else %}
+    <p>Please sign-in to get access adding comments</p>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block domready %}
+    $( ".date_of_birth" ).find('#id_date_of_birth_month').wrap( "<div class='col-md-4 col-5 col-lg-3'></div>" );
+    $( ".date_of_birth" ).find('#id_date_of_birth_year').wrap( "<div class='col-md-4 col-4 col-lg-3'></div>" );
+    $( ".date_of_birth" ).find('#id_date_of_birth_day').wrap( "<div class='col-md-4 col-3 col-lg-3'></div>" );
+
+{% endblock %}

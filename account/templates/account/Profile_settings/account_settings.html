@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% load thumbnail%}
+{% block title %}Account settings {% endblock %}
+
+
+{% block content %}
+<div class="container">
+{% if request.user.is_authenticated %}
+<div class="col-md-6">
+                <h3>Settings</h3>
+                <hr>
+            </div>
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link " href="{% url 'account:profile_update' user.profile.pk %}">Profile</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="{% url 'account:account_update' user.pk %}">Account</a>
+      </li>
+    </ul>
+    <br/>
+
+    {% if request.user.is_authenticated %}
+    <form class="account-form" method="post" action="{% url 'account:account_update' object.pk %}">
+        {% csrf_token %}
+        {% for field in form %}
+            {{ field.label }}
+            {{ field }}
+        {% endfor %}
+        <input type="submit" value='Update'>
+    </form>
+{% else %}
+    <p>Please sign-in to get access adding comments</p>
+{% endif %}
+{% else %}
+    <p>Please sign-in to get access adding comments</p>
+{% endif %}
+</div>
+{% endblock %}
